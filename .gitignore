@@ -1,0 +1,27 @@
+# Gradle
+.gradle/
+**/build/
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+captures/
+
+# Native build
+.externalNativeBuild/
+.cxx/
+
+# macOS
+.DS_Store
+
+# Signing credentials
+*.jks
+*.keystore
+keystore.properties
+
+# Logs
+*.log
+
+# Local migration backups
+.migration-backup/

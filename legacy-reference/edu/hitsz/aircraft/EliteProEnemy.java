@@ -1,0 +1,102 @@
+package edu.hitsz.aircraft;
+
+import edu.hitsz.application.Main;
+import edu.hitsz.factory.PropFactory;
+import edu.hitsz.prop.AbstractProp;
+import edu.hitsz.strategy.ScatterShootStrategy;
+
+import java.util.LinkedList;
+import java.util.List;
+
+public class EliteProEnemy extends AbstractEnemy {
+    public EliteProEnemy(int locationX, int locationY, int speedX, int speedY, int hp) {
+        super(locationX, locationY, speedX, speedY, hp);
+
+        // ==========================================
+        // 【策略模式】：初始化继承自父类的射击属性
+        // ==========================================
+        // 每次射击发射子弹数量 (3发扇形散射)
+        this.shootNum = 3;
+        // 子弹威力
+        this.power = 30; 
+        // 子弹射击方向
+        this.direction = 1;
+
+        // 装备散射策略
+        this.shootStrategy = new ScatterShootStrategy();
+    }
+
+    @Override
+    public void forward() {
+        super.forward();
+
+        // 解决边缘抖动和飞出边界的问题
+        if (locationX <= 0) {
+            speedX = Math.abs(speedX); 
+        } else if (locationX >= Main.WINDOW_WIDTH - 60) {
+            speedX = -Math.abs(speedX); 
+        }
+
+        // 向下飞出屏幕边界后回收名额
+        if (locationY >= Main.WINDOW_HEIGHT) {
+            vanish();
+        }
+    }
+
+    @Override
+    public int getScore() {
+        return 50; 
+    }
+
+    @Override
+    public List<AbstractProp> dropProps() {
+        List<AbstractProp> res = new LinkedList<>();
+
+        // 50% 的概率决定是否掉落道具
+        if (Math.random() < 0.5) {
+            double prob = Math.random();
+            String selectedType;
+
+            if (prob < 0.4) {
+                selectedType = "Blood";
+            } else if (prob < 0.6) {
+                selectedType = "Bullet";
+            } else if (prob < 0.8) {
+                selectedType = "Bomb";
+            } else if (prob < 0.9) {
+                selectedType = "Freeze";
+            } else {
+                selectedType = "BulletPlus";
+            }
+
+            res.add(PropFactory.createProp(selectedType, this.getLocationX(), this.getLocationY(), 0, 5));
+        }
+        return res;
+    }
+
+    @Override
+    public void onBombActive() {
+        System.out.println("王牌敌机遭到炸弹攻击，扣除 50 点血量！");
+        this.decreaseHp(50); 
+    }
+
+    @Override
+    public void onIceActive() {
+        System.out.println("王牌敌机抵抗了严寒，被减速 5 秒！");
+        // 减速 5s 后恢复
+        Runnable r = () -> {
+            int originalSpeedY = this.getSpeedY();
+            // 速度减半
+            this.setSpeedY(originalSpeedY / 2);
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (!this.notValid()) {
+                this.setSpeedY(originalSpeedY);
+            }
+        };
+        new Thread(r).start();
+    }
+}
